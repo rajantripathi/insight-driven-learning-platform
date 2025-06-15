@@ -1,22 +1,16 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Bot, User, X, Send, Mic, Brain } from "lucide-react";
+import { Bot, X, Send, Mic, Brain } from "lucide-react";
 import { VoiceAssistant } from "./VoiceAssistant";
+import { ChatMessage } from "./ChatMessage";
+import { AssessmentDisplay } from "./AssessmentDisplay";
+import { useAIChatState } from "@/hooks/useAIChatState";
 import { AssessmentFeedback } from "@/api/voiceAssistant";
-
-interface Message {
-  id: number;
-  text: string;
-  sender: 'user' | 'ai';
-  timestamp: Date;
-  isLoading?: boolean;
-}
 
 interface AIChatWidgetProps {
   lessonTitle?: string;
@@ -27,96 +21,19 @@ export const AIChatWidget = ({ lessonTitle, lessonContent }: AIChatWidgetProps =
   const [isOpen, setIsOpen] = useState(false);
   const [showVoiceMode, setShowVoiceMode] = useState(false);
   const [overallAssessment, setOverallAssessment] = useState<AssessmentFeedback | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: lessonTitle 
-        ? `Hi! I'm your AI learning companion. I can see you're working on "${lessonTitle}". I can help you through text or voice, and I'll assess your understanding as we go. How would you like to learn today?`
-        : "Hi! I'm your AI learning companion. I can help you through text or voice. How would you like to learn today?",
-      sender: 'ai',
-      timestamp: new Date()
-    }
-  ]);
-  const [inputValue, setInputValue] = useState("");
-
-  // Update welcome message when lesson changes
-  useEffect(() => {
-    if (lessonTitle && messages.length === 1) {
-      setMessages([{
-        id: 1,
-        text: `Hi! I'm your AI learning companion. I can see you're working on "${lessonTitle}". I can help you through text or voice, and I'll assess your understanding as we go. How would you like to learn today?`,
-        sender: 'ai',
-        timestamp: new Date()
-      }]);
-    }
-  }, [lessonTitle]);
+  
+  const { messages, inputValue, setInputValue, sendMessage } = useAIChatState(lessonTitle);
 
   const handleAssessmentUpdate = (assessment: AssessmentFeedback) => {
     console.log('Assessment update received:', assessment);
     setOverallAssessment(assessment);
   };
 
-  const sendMessage = () => {
-    if (!inputValue.trim()) return;
-
-    const userMessage: Message = {
-      id: messages.length + 1,
-      text: inputValue,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // Add loading message
-    const loadingMessage: Message = {
-      id: messages.length + 2,
-      text: "",
-      sender: 'ai',
-      timestamp: new Date(),
-      isLoading: true
-    };
-
-    setMessages(prev => [...prev, loadingMessage]);
-
-    // Simulate AI response with loading delay
-    setTimeout(() => {
-      setMessages(prev => prev.filter(msg => !msg.isLoading));
-      
-      const aiResponse: Message = {
-        id: messages.length + 3,
-        text: `I understand you're asking about "${inputValue}". Let me help you with that! ${lessonTitle ? `In the context of ${lessonTitle}, ` : ''}this is an important topic that requires understanding of key concepts. Can you tell me what you already know about this?`,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 2000);
-
-    setInputValue("");
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      sendMessage();
+      sendMessage(lessonTitle, lessonContent);
     }
   };
-
-  const LoadingSkeleton = () => (
-    <div className="flex justify-start">
-      <div className="flex items-start space-x-2 max-w-[80%]">
-        <div className="p-2 rounded-full bg-gray-200">
-          <Bot className="h-4 w-4 text-gray-600" />
-        </div>
-        <div className="p-3 rounded-2xl bg-gray-100">
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -179,15 +96,7 @@ export const AIChatWidget = ({ lessonTitle, lessonContent }: AIChatWidgetProps =
 
             {/* Assessment Status */}
             {overallAssessment && showVoiceMode && (
-              <div className="mt-2 flex gap-1">
-                <Badge variant="secondary" className="text-xs">
-                  <Brain className="h-3 w-3 mr-1" />
-                  Understanding: {overallAssessment.understoodConcept ? 'Good' : 'Reviewing'}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  Engagement: {overallAssessment.engagementLevel}
-                </Badge>
-              </div>
+              <AssessmentDisplay assessment={overallAssessment} showVoiceMode={showVoiceMode} />
             )}
           </CardHeader>
 
@@ -206,44 +115,7 @@ export const AIChatWidget = ({ lessonTitle, lessonContent }: AIChatWidgetProps =
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
                     {messages.map((message) => (
-                      <div key={message.id}>
-                        {message.isLoading ? (
-                          <LoadingSkeleton />
-                        ) : (
-                          <div className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`flex items-start space-x-2 max-w-[80%] ${
-                              message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                            }`}>
-                              <div className={`p-2 rounded-full ${
-                                message.sender === 'user' 
-                                  ? 'bg-bikal-blue' 
-                                  : 'bg-gray-200'
-                              }`}>
-                                {message.sender === 'user' ? (
-                                  <User className="h-4 w-4 text-white" />
-                                ) : (
-                                  <Bot className="h-4 w-4 text-gray-600" />
-                                )}
-                              </div>
-                              <div className={`p-3 rounded-2xl ${
-                                message.sender === 'user'
-                                  ? 'bg-bikal-blue text-white'
-                                  : 'bg-gray-100 text-gray-900'
-                              }`}>
-                                <p className="text-sm">{message.text}</p>
-                                <p className={`text-xs mt-1 ${
-                                  message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-                                }`}>
-                                  {message.timestamp.toLocaleTimeString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      <ChatMessage key={message.id} message={message} />
                     ))}
                   </div>
                 </ScrollArea>
@@ -258,7 +130,7 @@ export const AIChatWidget = ({ lessonTitle, lessonContent }: AIChatWidgetProps =
                       className="flex-1 rounded-xl"
                     />
                     <Button
-                      onClick={sendMessage}
+                      onClick={() => sendMessage(lessonTitle, lessonContent)}
                       size="sm"
                       className="bg-bikal-blue hover:bg-bikal-blue/90 rounded-xl px-3"
                     >
