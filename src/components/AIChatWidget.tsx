@@ -180,11 +180,11 @@ export const AIChatWidget = ({ lessonTitle, lessonContent }: AIChatWidgetProps =
             {/* Assessment Status */}
             {overallAssessment && showVoiceMode && (
               <div className="mt-2 flex gap-1">
-                <Badge variant="secondary" size="sm" className="text-xs">
+                <Badge variant="secondary" className="text-xs">
                   <Brain className="h-3 w-3 mr-1" />
                   Understanding: {overallAssessment.understoodConcept ? 'Good' : 'Reviewing'}
                 </Badge>
-                <Badge variant="outline" size="sm" className="text-xs">
+                <Badge variant="outline" className="text-xs">
                   Engagement: {overallAssessment.engagementLevel}
                 </Badge>
               </div>

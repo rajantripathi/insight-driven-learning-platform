@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -290,7 +289,7 @@ export const VoiceAssistant = ({
                     <p className="text-sm">{msg.text}</p>
                     {msg.assessment && assessmentMode && (
                       <div className="flex gap-1 mt-2">
-                        <Badge size="sm" variant={msg.assessment.understoodConcept ? "default" : "secondary"}>
+                        <Badge variant={msg.assessment.understoodConcept ? "default" : "secondary"}>
                           {getAssessmentIcon(msg.assessment)}
                           {msg.assessment.understoodConcept ? 'Understood' : 'Review needed'}
                         </Badge>
