@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   DndContext,
@@ -265,8 +264,16 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
         onLessonUpdated={fetchLessons}
       />
 
-      {/* AI Chat Widget for Voice Learning - positioned as overlay */}
-      <AIChatWidget />
+      {/* AI Chat Widget for Voice Learning with lesson context */}
+      <AIChatWidget 
+        lessonTitle={selectedLesson?.title || courseTitle}
+        lessonContent={selectedLesson ? `
+          Title: ${selectedLesson.title}
+          Session: ${selectedLesson.session_no}
+          Duration: ${selectedLesson.estimated_duration}
+          Learning Objectives: ${selectedLesson.learning_objectives.join(', ')}
+        ` : `Course: ${courseTitle}`}
+      />
     </div>
   );
 };

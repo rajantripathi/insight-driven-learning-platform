@@ -1,12 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, User, X, Send, Mic } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Bot, User, X, Send, Mic, Brain } from "lucide-react";
 import { VoiceAssistant } from "./VoiceAssistant";
+import { AssessmentFeedback } from "@/api/voiceAssistant";
 
 interface Message {
   id: number;
@@ -16,18 +18,43 @@ interface Message {
   isLoading?: boolean;
 }
 
-export const AIChatWidget = () => {
+interface AIChatWidgetProps {
+  lessonTitle?: string;
+  lessonContent?: string;
+}
+
+export const AIChatWidget = ({ lessonTitle, lessonContent }: AIChatWidgetProps = {}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showVoiceMode, setShowVoiceMode] = useState(false);
+  const [overallAssessment, setOverallAssessment] = useState<AssessmentFeedback | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi! I'm your AI learning companion. I can help you through text or voice. How would you like to learn today?",
+      text: lessonTitle 
+        ? `Hi! I'm your AI learning companion. I can see you're working on "${lessonTitle}". I can help you through text or voice, and I'll assess your understanding as we go. How would you like to learn today?`
+        : "Hi! I'm your AI learning companion. I can help you through text or voice. How would you like to learn today?",
       sender: 'ai',
       timestamp: new Date()
     }
   ]);
   const [inputValue, setInputValue] = useState("");
+
+  // Update welcome message when lesson changes
+  useEffect(() => {
+    if (lessonTitle && messages.length === 1) {
+      setMessages([{
+        id: 1,
+        text: `Hi! I'm your AI learning companion. I can see you're working on "${lessonTitle}". I can help you through text or voice, and I'll assess your understanding as we go. How would you like to learn today?`,
+        sender: 'ai',
+        timestamp: new Date()
+      }]);
+    }
+  }, [lessonTitle]);
+
+  const handleAssessmentUpdate = (assessment: AssessmentFeedback) => {
+    console.log('Assessment update received:', assessment);
+    setOverallAssessment(assessment);
+  };
 
   const sendMessage = () => {
     if (!inputValue.trim()) return;
@@ -58,7 +85,7 @@ export const AIChatWidget = () => {
       
       const aiResponse: Message = {
         id: messages.length + 3,
-        text: "I understand you're asking about " + inputValue + ". Let me help you with that! In a real implementation, I would provide detailed explanations and adaptive learning support.",
+        text: `I understand you're asking about "${inputValue}". Let me help you with that! ${lessonTitle ? `In the context of ${lessonTitle}, ` : ''}this is an important topic that requires understanding of key concepts. Can you tell me what you already know about this?`,
         sender: 'ai',
         timestamp: new Date()
       };
@@ -114,7 +141,9 @@ export const AIChatWidget = () => {
                 </div>
                 <div>
                   <CardTitle className="text-lg">AI Learning Assistant</CardTitle>
-                  <p className="text-blue-100 text-sm">Online • Ready to help</p>
+                  <p className="text-blue-100 text-sm">
+                    {lessonTitle ? `Learning: ${lessonTitle}` : 'Online • Ready to help'}
+                  </p>
                 </div>
               </div>
               <Button
@@ -126,6 +155,8 @@ export const AIChatWidget = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
+            
+            {/* Mode Selection */}
             <div className="flex gap-2 mt-3">
               <Button
                 variant="ghost"
@@ -145,12 +176,30 @@ export const AIChatWidget = () => {
                 Voice Mode
               </Button>
             </div>
+
+            {/* Assessment Status */}
+            {overallAssessment && showVoiceMode && (
+              <div className="mt-2 flex gap-1">
+                <Badge variant="secondary" size="sm" className="text-xs">
+                  <Brain className="h-3 w-3 mr-1" />
+                  Understanding: {overallAssessment.understoodConcept ? 'Good' : 'Reviewing'}
+                </Badge>
+                <Badge variant="outline" size="sm" className="text-xs">
+                  Engagement: {overallAssessment.engagementLevel}
+                </Badge>
+              </div>
+            )}
           </CardHeader>
 
           <CardContent className="p-0 flex flex-col h-[500px]">
             {showVoiceMode ? (
               <div className="p-4 flex-1 flex items-center justify-center">
-                <VoiceAssistant assessmentMode={true} />
+                <VoiceAssistant 
+                  lessonTitle={lessonTitle}
+                  lessonContent={lessonContent}
+                  assessmentMode={true}
+                  onAssessmentUpdate={handleAssessmentUpdate}
+                />
               </div>
             ) : (
               <>
@@ -205,7 +254,7 @@ export const AIChatWidget = () => {
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything about your studies..."
+                      placeholder={lessonTitle ? `Ask about ${lessonTitle}...` : "Ask me anything about your studies..."}
                       className="flex-1 rounded-xl"
                     />
                     <Button
