@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AuthDebug from "@/components/AuthDebug";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import RoleSelect from "./pages/RoleSelect";
@@ -15,7 +16,14 @@ import LessonBoard from "./pages/LessonBoard";
 import CourseSetup from "./pages/CourseSetup";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -51,7 +59,6 @@ const App = () => (
                 <LessonBoard />
               </ProtectedRoute>
             } />
-            {/* Placeholder routes for future development */}
             <Route path="/course-setup" element={
               <ProtectedRoute>
                 <CourseSetup />
@@ -72,9 +79,9 @@ const App = () => (
                 <div className="p-8 text-center"><h1 className="text-2xl">Program Lead Dashboard - Coming Soon</h1></div>
               </ProtectedRoute>
             } />
-            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <AuthDebug />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

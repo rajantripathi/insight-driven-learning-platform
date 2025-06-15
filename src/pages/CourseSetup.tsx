@@ -40,16 +40,19 @@ const CourseSetup = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from('courses').insert({
-        title,
-        description,
+      console.log('Creating course with user ID:', user.id);
+      const { data, error } = await supabase.from('courses').insert({
+        title: title.trim(),
+        description: description.trim() || null,
         instructor_id: user.id,
-      });
+      }).select().single();
 
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
 
+      console.log('Course created successfully:', data);
       toast({
         title: "Success!",
         description: "Your new course has been created.",
@@ -66,6 +69,20 @@ const CourseSetup = () => {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+        <Card className="border-0 shadow-lg rounded-2xl">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-4">Please log in to create a course.</p>
+            <Button onClick={() => navigate('/auth')}>Go to Login</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
@@ -86,7 +103,7 @@ const CourseSetup = () => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <label htmlFor="title" className="font-medium text-gray-800">Course Title</label>
+                <label htmlFor="title" className="font-medium text-gray-800">Course Title *</label>
                 <Input
                   id="title"
                   placeholder="e.g., Introduction to Computer Science"
@@ -94,6 +111,7 @@ const CourseSetup = () => {
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={loading}
                   className="rounded-xl"
+                  required
                 />
               </div>
               <div className="space-y-2">
