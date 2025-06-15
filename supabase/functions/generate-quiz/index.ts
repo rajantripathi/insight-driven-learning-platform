@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -119,7 +120,7 @@ Please generate the quiz in JSON format:
   ]
 }
 
-Make questions challenging and educationally valuable. Return STRICT VALID JSON. Do not wrap in markdown. If unsure, respond with the word ERROR.`;
+Make questions challenging and educationally valuable. Return STRICT VALID JSON only. Do NOT wrap in markdown. If you cannot comply, respond with the single word ERROR.`;
 
     // Rate limiting check
     const projectedTokens = estimateTokens(prompt);
@@ -141,11 +142,11 @@ Make questions challenging and educationally valuable. Return STRICT VALID JSON.
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert educational assessment designer. Create high-quality quiz questions that test student understanding. Always respond with valid JSON only. Return STRICT VALID JSON. Do not wrap in markdown. If unsure, respond with the word ERROR.' },
+          { role: 'system', content: 'You are an expert educational assessment designer. Create high-quality quiz questions that test student understanding. Always respond with valid JSON only. Return STRICT VALID JSON only. Do NOT wrap in markdown. If you cannot comply, respond with the single word ERROR.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        max_tokens: 800,
       }),
     });
 
