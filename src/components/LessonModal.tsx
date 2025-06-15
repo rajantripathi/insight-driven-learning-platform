@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { generateLesson } from '@/api/lessonGeneration';
+import { generateLesson } from '@/lib/aiClient';
 import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Clock, Target, BookOpen, Activity, Loader2 } from 'lucide-react';
 
