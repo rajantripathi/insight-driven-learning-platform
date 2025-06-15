@@ -3,9 +3,19 @@ import { Database } from '@/integrations/supabase/types'
 import { createClient } from '@supabase/supabase-js'
 import { toast } from '@/hooks/use-toast'
 
+// Runtime check for required environment variables
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.error('Supabase env vars missing');
+  toast({ 
+    title: 'Config error', 
+    description: 'Supabase keys not set', 
+    variant: 'destructive' 
+  });
+}
+
 const supabase = createClient<Database>(
-  'https://ubzitwkzwzmjztybnpsn.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVieml0d2t6d3ptanp0eWJucHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5Nzk0NDUsImV4cCI6MjA2NTU1NTQ0NX0.qLnRe3UoYgbSH3cvMGFVM7tyw20z-yd8A9darHFCp-8'
+  import.meta.env.VITE_SUPABASE_URL || 'https://ubzitwkzwzmjztybnpsn.supabase.co',
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVieml0d2t6d3ptanp0eWJucHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5Nzk0NDUsImV4cCI6MjA2NTU1NTQ0NX0.qLnRe3UoYgbSH3cvMGFVM7tyw20z-yd8A9darHFCp-8'
 )
 
 const handleResponse = async (response: Response) => {

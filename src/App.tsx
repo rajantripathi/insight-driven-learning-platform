@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +15,8 @@ import StudentDashboard from "./pages/StudentDashboard";
 import LessonBoard from "./pages/LessonBoard";
 import CourseSetup from "./pages/CourseSetup";
 import NotFound from "./pages/NotFound";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +29,16 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const [toastMessage, setToastMessage] = useState("");
+  const { toasts } = useToast();
+
+  // Update aria-live region when toasts change
+  useEffect(() => {
+    const latestToast = toasts[0];
+    if (latestToast) {
+      const message = `${latestToast.title || ''} ${latestToast.description || ''}`.trim();
+      setToastMessage(message);
+    }
+  }, [toasts]);
 
   return (
     <QueryClientProvider client={queryClient}>

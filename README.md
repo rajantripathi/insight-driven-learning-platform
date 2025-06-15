@@ -1,3 +1,4 @@
+
 # Welcome to your Lovable project
 
 ## Project info
@@ -50,6 +51,60 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## Local Setup
+
+For local development with your own Supabase project:
+
+1. **Clone and install dependencies**
+   ```sh
+   git clone <YOUR_GIT_URL>
+   cd <YOUR_PROJECT_NAME>
+   npm install
+   ```
+
+2. **Environment configuration**
+   ```sh
+   cp .env.example .env.local
+   ```
+   
+   Fill in your environment variables:
+   - `VITE_SUPABASE_URL` - Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY` - Your Supabase anon/public key
+   - `OPENAI_API_KEY` - Your OpenAI API key (for Edge Functions)
+
+3. **Database setup**
+   ```sh
+   # Initialize Supabase (if not already done)
+   supabase init
+   
+   # Push database schema
+   supabase db push
+   ```
+
+4. **Start development server**
+   ```sh
+   npm run dev
+   ```
+
+## Security Note
+
+After replacing the dummy Supabase keys with your own production keys, rotate your Supabase anon key and consider scrubbing the old secrets from git history:
+
+```sh
+# Optional: Remove old secrets from git history
+git filter-repo --path src/lib/aiClient.ts --invert-paths
+```
+
+## Architecture
+
+This project includes several key features:
+
+- **Authentication & Authorization**: User roles (teacher, student) with Supabase Auth
+- **AI Integration**: OpenAI-powered lesson and quiz generation
+- **Rate Limiting**: Built-in guardrails to prevent API abuse (1-minute cooldown on rate limits)
+- **Real-time Updates**: Course and lesson management with live data sync
+- **Responsive Design**: Mobile-first UI built with Tailwind CSS and shadcn/ui
+
 ## What technologies are used for this project?
 
 This project is built with:
@@ -59,6 +114,8 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Authentication, Database, Edge Functions)
+- OpenAI API
 
 ## How can I deploy this project?
 
