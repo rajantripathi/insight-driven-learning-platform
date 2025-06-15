@@ -8,6 +8,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_TOKENS_PER_MIN = 10000;
+
+// Simple token estimation function
+const estimateTokens = (text: string): number => {
+  // Rough estimate: 1 token ≈ 4 characters for English text
+  return Math.ceil(text.length / 4);
+};
+
+const getTokensLastMinute = async (supabase: any, uid: string): Promise<number> => {
+  const { data, error } = await supabase.rpc('get_tokens_last_minute', { user_id: uid });
+  if (error) {
+    console.error('Error getting tokens last minute:', error);
+    return 0;
+  }
+  return data || 0;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,6 +35,28 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'No authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Get user from JWT token
+    const { data: { user }, error: userError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!openAIApiKey) {
       // Fallback to static data if no API key
       const fallbackData = {
@@ -83,6 +122,17 @@ Please generate the quiz in JSON format:
 
 Make questions challenging and educationally valuable.`;
 
+    // Rate limiting check
+    const projectedTokens = estimateTokens(prompt);
+    const tokensLastMinute = await getTokensLastMinute(supabase, user.id);
+    
+    if (tokensLastMinute + projectedTokens > MAX_TOKENS_PER_MIN) {
+      return new Response(JSON.stringify({ error: 'rate_limit' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -109,9 +159,14 @@ Make questions challenging and educationally valuable.`;
       throw new Error('Invalid AI response format');
     }
 
+    // Record token usage
+    const actualTokens = data.usage?.total_tokens || projectedTokens;
+    await supabase.from('openai_usage').insert({
+      uid: user.id,
+      tokens: actualTokens,
+    });
+
     // Save to Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
     const { data: assessment, error: assessmentError } = await supabase
       .from('assessments')
       .insert({

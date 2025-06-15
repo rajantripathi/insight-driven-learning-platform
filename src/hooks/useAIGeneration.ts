@@ -18,9 +18,13 @@ export const useAIGeneration = () => {
       });
       return result;
     } catch (error: any) {
+      let description = error.message || "Failed to generate lesson";
+      if (error.message === 'rate_limit') {
+        description = "Rate limit hit, wait a minute";
+      }
       toast({
         title: "Error",
-        description: error.message || "Failed to generate lesson",
+        description,
         variant: "destructive",
       });
       throw error;
@@ -39,9 +43,13 @@ export const useAIGeneration = () => {
       });
       return result;
     } catch (error: any) {
+      let description = error.message || "Failed to generate quiz";
+      if (error.message === 'rate_limit') {
+        description = "Rate limit hit, wait a minute";
+      }
       toast({
         title: "Error",
-        description: error.message || "Failed to generate quiz",
+        description,
         variant: "destructive",
       });
       throw error;

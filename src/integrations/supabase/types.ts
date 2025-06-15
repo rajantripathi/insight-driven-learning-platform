@@ -263,6 +263,27 @@ export type Database = {
           },
         ]
       }
+      openai_usage: {
+        Row: {
+          id: number
+          tokens: number
+          ts: string | null
+          uid: string | null
+        }
+        Insert: {
+          id?: never
+          tokens: number
+          ts?: string | null
+          uid?: string | null
+        }
+        Update: {
+          id?: never
+          tokens?: number
+          ts?: string | null
+          uid?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -389,6 +410,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_tokens_last_minute: {
+        Args: { user_id: string }
+        Returns: number
+      }
       is_course_instructor: {
         Args: { course_id_to_check: string }
         Returns: boolean
