@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, BookOpen, Clock, Target } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Clock, Target, Sparkles, RefreshCw } from 'lucide-react';
 import { generateSessionPlan } from '@/api/sessionGeneration';
+import { generateCourseTopics } from '@/api/topicGeneration';
 
 interface SessionPlan {
   sessionNo: number;
@@ -31,10 +32,13 @@ const CourseSetup = () => {
   const [courseTopics, setCourseTopics] = useState('');
   const [sessionFrequency, setSessionFrequency] = useState('weekly');
   const [sessionDuration, setSessionDuration] = useState('2 hours');
+  const [courseLevel, setCourseLevel] = useState('intermediate');
+  const [courseCategory, setCourseCategory] = useState('');
   
   // Generated session plan
   const [sessionPlan, setSessionPlan] = useState<SessionPlan[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [generatingTopics, setGeneratingTopics] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleNext = async () => {
@@ -52,7 +56,7 @@ const CourseSetup = () => {
       if (!courseTopics.trim()) {
         toast({
           title: "Validation Error",
-          description: "Please provide the main topics you want to cover.",
+          description: "Please provide the main topics you want to cover or use AI to generate them.",
           variant: "destructive",
         });
         return;
@@ -60,6 +64,45 @@ const CourseSetup = () => {
       await generateSessions();
     } else if (step === 3) {
       await createCourseWithSessions();
+    }
+  };
+
+  const handleGenerateTopics = async () => {
+    if (!title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a course title first to generate topics.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingTopics(true);
+    try {
+      const generatedTopics = await generateCourseTopics({
+        courseTitle: title,
+        courseDescription: description,
+        numberOfSessions,
+        sessionDuration,
+        courseLevel,
+        courseCategory,
+      });
+      
+      setCourseTopics(generatedTopics);
+      
+      toast({
+        title: "Success!",
+        description: "Course topics generated successfully. You can review and edit them.",
+      });
+    } catch (error: any) {
+      console.error('Error generating topics:', error);
+      toast({
+        title: "Error",
+        description: `Failed to generate topics: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingTopics(false);
     }
   };
 
@@ -224,6 +267,31 @@ const CourseSetup = () => {
                     className="rounded-xl"
                   />
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label htmlFor="level" className="font-medium text-gray-800">Course Level</label>
+                    <select
+                      id="level"
+                      value={courseLevel}
+                      onChange={(e) => setCourseLevel(e.target.value)}
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="category" className="font-medium text-gray-800">Course Category</label>
+                    <Input
+                      id="category"
+                      placeholder="e.g., Computer Science, Mathematics, Business"
+                      value={courseCategory}
+                      onChange={(e) => setCourseCategory(e.target.value)}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
               </CardContent>
             </>
           )}
@@ -232,7 +300,7 @@ const CourseSetup = () => {
             <>
               <CardHeader>
                 <CardTitle className="text-2xl font-bold">Plan Your Sessions</CardTitle>
-                <CardDescription>Tell us about your course structure and we'll generate a session plan for you.</CardDescription>
+                <CardDescription>Configure your course structure and define the topics to cover.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -265,15 +333,40 @@ const CourseSetup = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="topics" className="font-medium text-gray-800">Course Topics & Outline *</label>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="topics" className="font-medium text-gray-800">Course Topics & Outline *</label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateTopics}
+                      disabled={generatingTopics || !title.trim()}
+                      className="rounded-xl"
+                    >
+                      {generatingTopics ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate with AI
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <Textarea
                     id="topics"
                     placeholder="List the main topics, concepts, or modules you want to cover in this course. Be as detailed as possible to help us create a better session plan."
                     value={courseTopics}
                     onChange={(e) => setCourseTopics(e.target.value)}
-                    rows={6}
+                    rows={8}
                     className="rounded-xl"
                   />
+                  <p className="text-sm text-gray-500">
+                    💡 Tip: Use the "Generate with AI" button to automatically create a comprehensive topic outline based on your course details.
+                  </p>
                 </div>
               </CardContent>
             </>
