@@ -29,9 +29,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
+          {/* Accessibility announcement for toast messages */}
+          <div aria-live="assertive" className="sr-only" id="toast-announcer">
+          </div>
+          
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
@@ -83,6 +85,10 @@ const App = () => (
           </Routes>
           <AuthDebug />
         </BrowserRouter>
+        
+        {/* Toast providers at the end for proper z-index */}
+        <Toaster />
+        <Sonner />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
