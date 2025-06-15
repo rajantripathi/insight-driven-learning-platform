@@ -114,7 +114,7 @@ const TeacherDashboard = () => {
               <CardContent className="space-y-4">
                 {courses.map((course) => (
                   <div key={course.id} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
-                       onClick={() => navigate('/lesson-board')}>
+                       onClick={() => navigate(`/lesson-board?courseId=${course.id}`)}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="font-semibold text-gray-900">{course.name}</h3>
