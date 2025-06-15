@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -155,6 +154,7 @@ Make questions challenging and educationally valuable. Return STRICT VALID JSON.
     
     // Check if AI responded with ERROR
     if (aiResponse.trim() === 'ERROR') {
+      // Fallback to static data if AI response is ERROR
       const fallbackData = {
         title: `Assessment Quiz`,
         estimatedDuration: "15 minutes",
