@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, User, X, Send } from "lucide-react";
+import { Bot, User, X, Send, Mic } from "lucide-react";
+import { VoiceAssistant } from "./VoiceAssistant";
 
 interface Message {
   id: number;
@@ -17,10 +18,11 @@ interface Message {
 
 export const AIChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showVoiceMode, setShowVoiceMode] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi! I'm your AI learning companion. How can I help you today?",
+      text: "Hi! I'm your AI learning companion. I can help you through text or voice. How would you like to learn today?",
       sender: 'ai',
       timestamp: new Date()
     }
@@ -103,7 +105,7 @@ export const AIChatWidget = () => {
 
       {/* Chat Widget */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-2xl border-0 rounded-2xl z-50 bg-white">
+        <Card className="fixed bottom-6 right-6 w-96 h-[600px] shadow-2xl border-0 rounded-2xl z-50 bg-white">
           <CardHeader className="bg-gradient-to-r from-bikal-blue to-blue-700 text-white rounded-t-2xl pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -124,72 +126,99 @@ export const AIChatWidget = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
+            <div className="flex gap-2 mt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowVoiceMode(false)}
+                className={`text-white hover:bg-white/20 ${!showVoiceMode ? 'bg-white/20' : ''}`}
+              >
+                Text Chat
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowVoiceMode(true)}
+                className={`text-white hover:bg-white/20 ${showVoiceMode ? 'bg-white/20' : ''}`}
+              >
+                <Mic className="h-4 w-4 mr-1" />
+                Voice Mode
+              </Button>
+            </div>
           </CardHeader>
 
-          <CardContent className="p-0 flex flex-col h-[400px]">
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div key={message.id}>
-                    {message.isLoading ? (
-                      <LoadingSkeleton />
-                    ) : (
-                      <div className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`flex items-start space-x-2 max-w-[80%] ${
-                          message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                        }`}>
-                          <div className={`p-2 rounded-full ${
-                            message.sender === 'user' 
-                              ? 'bg-bikal-blue' 
-                              : 'bg-gray-200'
-                          }`}>
-                            {message.sender === 'user' ? (
-                              <User className="h-4 w-4 text-white" />
-                            ) : (
-                              <Bot className="h-4 w-4 text-gray-600" />
-                            )}
-                          </div>
-                          <div className={`p-3 rounded-2xl ${
-                            message.sender === 'user'
-                              ? 'bg-bikal-blue text-white'
-                              : 'bg-gray-100 text-gray-900'
-                          }`}>
-                            <p className="text-sm">{message.text}</p>
-                            <p className={`text-xs mt-1 ${
-                              message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+          <CardContent className="p-0 flex flex-col h-[500px]">
+            {showVoiceMode ? (
+              <div className="p-4 flex-1 flex items-center justify-center">
+                <VoiceAssistant assessmentMode={true} />
+              </div>
+            ) : (
+              <>
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div key={message.id}>
+                        {message.isLoading ? (
+                          <LoadingSkeleton />
+                        ) : (
+                          <div className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`flex items-start space-x-2 max-w-[80%] ${
+                              message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                             }`}>
-                              {message.timestamp.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </p>
+                              <div className={`p-2 rounded-full ${
+                                message.sender === 'user' 
+                                  ? 'bg-bikal-blue' 
+                                  : 'bg-gray-200'
+                              }`}>
+                                {message.sender === 'user' ? (
+                                  <User className="h-4 w-4 text-white" />
+                                ) : (
+                                  <Bot className="h-4 w-4 text-gray-600" />
+                                )}
+                              </div>
+                              <div className={`p-3 rounded-2xl ${
+                                message.sender === 'user'
+                                  ? 'bg-bikal-blue text-white'
+                                  : 'bg-gray-100 text-gray-900'
+                              }`}>
+                                <p className="text-sm">{message.text}</p>
+                                <p className={`text-xs mt-1 ${
+                                  message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                                }`}>
+                                  {message.timestamp.toLocaleTimeString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </ScrollArea>
 
-            <div className="p-4 border-t">
-              <div className="flex space-x-2">
-                <Input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything about your studies..."
-                  className="flex-1 rounded-xl"
-                />
-                <Button
-                  onClick={sendMessage}
-                  size="sm"
-                  className="bg-bikal-blue hover:bg-bikal-blue/90 rounded-xl px-3"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+                <div className="p-4 border-t">
+                  <div className="flex space-x-2">
+                    <Input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Ask me anything about your studies..."
+                      className="flex-1 rounded-xl"
+                    />
+                    <Button
+                      onClick={sendMessage}
+                      size="sm"
+                      className="bg-bikal-blue hover:bg-bikal-blue/90 rounded-xl px-3"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

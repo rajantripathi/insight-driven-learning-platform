@@ -52,7 +52,7 @@ Generate a detailed session plan that:
 4. Ensures proper progression from basic to advanced concepts
 5. Balances theory and practical application
 
-Return ONLY a JSON object with this exact structure:
+IMPORTANT: Respond with ONLY valid JSON in this exact format (no markdown, no code blocks):
 {
   "sessions": [
     {
@@ -75,7 +75,7 @@ Make sure each session title is engaging and descriptive. Learning objectives sh
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert educational designer who creates comprehensive session plans for university courses. Always respond with valid JSON only.' },
+          { role: 'system', content: 'You are an expert educational designer who creates comprehensive session plans for university courses. Always respond with valid JSON only, no markdown formatting.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -86,9 +86,19 @@ Make sure each session title is engaging and descriptive. Learning objectives sh
     let sessionData;
     
     try {
-      sessionData = JSON.parse(data.choices[0].message.content);
+      let content = data.choices[0].message.content.trim();
+      
+      // Remove markdown code blocks if present
+      if (content.startsWith('```json')) {
+        content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (content.startsWith('```')) {
+        content = content.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      sessionData = JSON.parse(content);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
+      console.error('Raw content:', data.choices[0].message.content);
       throw new Error('Invalid AI response format');
     }
 
