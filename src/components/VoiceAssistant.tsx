@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { sendVoiceMessage, AssessmentFeedback } from '@/api/voiceAssistant';
 
@@ -21,74 +21,89 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
   const [aiResponse, setAiResponse] = useState('');
   const [assessment, setAssessment] = useState<AssessmentFeedback | null>(null);
   const [conversation, setConversation] = useState<Array<{type: 'user' | 'ai', text: string}>>([]);
+  const [isSupported, setIsSupported] = useState(true);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
-    // Initialize speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      
-      if (recognitionRef.current) {
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.lang = 'en-US';
-
-        recognitionRef.current.onresult = async (event) => {
-          const speechResult = event.results[0][0].transcript;
-          setTranscript(speechResult);
-          setConversation(prev => [...prev, { type: 'user', text: speechResult }]);
-          
-          try {
-            const response = await sendVoiceMessage({
-              message: speechResult,
-              context: lessonTitle,
-              lessonContent,
-              assessmentMode,
-            });
-            
-            setAiResponse(response.response);
-            setConversation(prev => [...prev, { type: 'ai', text: response.response }]);
-            
-            if (response.assessment) {
-              setAssessment(response.assessment);
-            }
-            
-            // Speak the AI response
-            speakText(response.response);
-            
-          } catch (error: any) {
-            console.error('Error getting AI response:', error);
-            toast({
-              title: "Error",
-              description: `Failed to get AI response: ${error.message}`,
-              variant: "destructive",
-            });
-          }
-        };
-
-        recognitionRef.current.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
-          setIsListening(false);
-          toast({
-            title: "Speech Recognition Error",
-            description: "Please try again or check your microphone permissions.",
-            variant: "destructive",
-          });
-        };
-
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
-      }
-    } else {
+    // Check for speech recognition support
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      setIsSupported(false);
       toast({
         title: "Not Supported",
-        description: "Speech recognition is not supported in this browser.",
+        description: "Speech recognition is not supported in this browser. Please use Chrome or Edge.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Initialize speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = async (event) => {
+        const speechResult = event.results[0][0].transcript;
+        console.log('Speech recognized:', speechResult);
+        setTranscript(speechResult);
+        setConversation(prev => [...prev, { type: 'user', text: speechResult }]);
+        
+        try {
+          const response = await sendVoiceMessage({
+            message: speechResult,
+            context: lessonTitle,
+            lessonContent,
+            assessmentMode,
+          });
+          
+          console.log('AI response received:', response);
+          setAiResponse(response.response);
+          setConversation(prev => [...prev, { type: 'ai', text: response.response }]);
+          
+          if (response.assessment) {
+            setAssessment(response.assessment);
+            console.log('Assessment received:', response.assessment);
+          }
+          
+          // Speak the AI response
+          speakText(response.response);
+          
+        } catch (error: any) {
+          console.error('Error getting AI response:', error);
+          toast({
+            title: "Error",
+            description: `Failed to get AI response: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        
+        let errorMessage = "Please try again or check your microphone permissions.";
+        if (event.error === 'no-speech') {
+          errorMessage = "No speech detected. Please speak clearly into your microphone.";
+        } else if (event.error === 'network') {
+          errorMessage = "Network error. Please check your internet connection.";
+        }
+        
+        toast({
+          title: "Speech Recognition Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
     }
 
     return () => {
@@ -101,10 +116,25 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
     };
   }, [lessonTitle, lessonContent, assessmentMode, toast]);
 
-  const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      setIsListening(true);
-      recognitionRef.current.start();
+  const startListening = async () => {
+    if (!isSupported) return;
+    
+    try {
+      // Request microphone permission
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      if (recognitionRef.current && !isListening) {
+        setIsListening(true);
+        recognitionRef.current.start();
+        console.log('Started listening...');
+      }
+    } catch (error) {
+      console.error('Microphone permission denied:', error);
+      toast({
+        title: "Microphone Access Denied",
+        description: "Please allow microphone access to use voice features.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -112,6 +142,7 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
+      console.log('Stopped listening');
     }
   };
 
@@ -125,9 +156,18 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
       utterance.pitch = 1;
       utterance.volume = 1;
       
-      utterance.onstart = () => setIsPlaying(true);
-      utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => setIsPlaying(false);
+      utterance.onstart = () => {
+        setIsPlaying(true);
+        console.log('Started speaking');
+      };
+      utterance.onend = () => {
+        setIsPlaying(false);
+        console.log('Finished speaking');
+      };
+      utterance.onerror = (error) => {
+        setIsPlaying(false);
+        console.error('Speech synthesis error:', error);
+      };
       
       speechSynthRef.current = utterance;
       speechSynthesis.speak(utterance);
@@ -138,6 +178,20 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
     speechSynthesis.cancel();
     setIsPlaying(false);
   };
+
+  if (!isSupported) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Voice Features Not Supported</h3>
+          <p className="text-gray-600">
+            Your browser doesn't support voice recognition. Please use Chrome or Edge for the best experience.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -194,6 +248,7 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
             onClick={isListening ? stopListening : startListening}
             className={`${isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
             size="lg"
+            disabled={!isSupported}
           >
             {isListening ? <MicOff className="h-5 w-5 mr-2" /> : <Mic className="h-5 w-5 mr-2" />}
             {isListening ? 'Stop Listening' : 'Start Speaking'}
@@ -217,6 +272,9 @@ export const VoiceAssistant = ({ lessonTitle, lessonContent, assessmentMode = fa
           )}
           {isPlaying && (
             <p className="text-green-600 font-medium">🔊 AI is speaking...</p>
+          )}
+          {!isListening && !isPlaying && conversation.length === 0 && (
+            <p className="text-gray-500">Click "Start Speaking" to begin your voice learning session</p>
           )}
         </div>
       </CardContent>

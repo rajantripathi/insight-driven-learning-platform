@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LessonColumn } from './LessonColumn';
 import { LessonCard } from './LessonCard';
 import { LessonModal } from './LessonModal';
+import { AIChatWidget } from './AIChatWidget';
 
 interface Lesson {
   id: string;
@@ -42,6 +43,7 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [courseTitle, setCourseTitle] = useState<string>('');
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -54,11 +56,36 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
 
   useEffect(() => {
     fetchLessons();
+    fetchCourseDetails();
   }, [courseId]);
+
+  const fetchCourseDetails = async () => {
+    try {
+      if (!isValidUUID(courseId)) return;
+      
+      const { data, error } = await supabase
+        .from('courses')
+        .select('title')
+        .eq('id', courseId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching course details:', error);
+        return;
+      }
+      
+      if (data) {
+        setCourseTitle(data.title);
+      }
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+    }
+  };
 
   const fetchLessons = async () => {
     try {
       setError(null);
+      console.log('Fetching lessons for course ID:', courseId);
       
       // Validate UUID format
       if (!isValidUUID(courseId)) {
@@ -73,8 +100,18 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
         .eq('course_id', courseId)
         .order('session_no');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched lessons:', data);
       setLessons(data || []);
+      
+      // If no lessons found, show helpful message
+      if (!data || data.length === 0) {
+        console.log('No lessons found for this course. You may need to generate lesson plans first.');
+      }
     } catch (error) {
       console.error('Error fetching lessons:', error);
       setError('Failed to load lessons. Please try again.');
@@ -149,6 +186,7 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bikal-blue"></div>
+        <span className="ml-2">Loading lessons...</span>
       </div>
     );
   }
@@ -171,7 +209,25 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
+      {/* Show helpful message if no lessons */}
+      {lessons.length === 0 && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">No Lessons Found</h3>
+          <p className="text-blue-600 mb-3">
+            This course doesn't have any lessons yet. You can generate lesson plans automatically or create them manually.
+          </p>
+          <div className="flex gap-2">
+            <button className="px-4 py-2 bg-bikal-blue text-white rounded hover:bg-bikal-blue/90">
+              Generate Lesson Plans with AI
+            </button>
+            <button className="px-4 py-2 border border-bikal-blue text-bikal-blue rounded hover:bg-blue-50">
+              Create Lesson Manually
+            </button>
+          </div>
+        </div>
+      )}
+
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -208,6 +264,9 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
         }}
         onLessonUpdated={fetchLessons}
       />
+
+      {/* AI Chat Widget for Voice Learning - positioned as overlay */}
+      <AIChatWidget />
     </div>
   );
 };
