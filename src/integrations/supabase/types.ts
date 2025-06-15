@@ -9,7 +9,381 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          estimated_time: string | null
+          id: string
+          lesson_id: string | null
+          order_index: number | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          estimated_time?: string | null
+          id?: string
+          lesson_id?: string | null
+          order_index?: number | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          estimated_time?: string | null
+          id?: string
+          lesson_id?: string | null
+          order_index?: number | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessments: {
+        Row: {
+          created_at: string | null
+          estimated_duration: string | null
+          id: string
+          lesson_id: string | null
+          title: string
+          total_points: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          estimated_duration?: string | null
+          id?: string
+          lesson_id?: string | null
+          title: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          estimated_duration?: string | null
+          id?: string
+          lesson_id?: string | null
+          title?: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attempts: {
+        Row: {
+          answers: Json
+          assessment_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          score: number | null
+          started_at: string | null
+          student_id: string | null
+          total_possible: number | null
+        }
+        Insert: {
+          answers: Json
+          assessment_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          score?: number | null
+          started_at?: string | null
+          student_id?: string | null
+          total_possible?: number | null
+        }
+        Update: {
+          answers?: Json
+          assessment_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          score?: number | null
+          started_at?: string | null
+          student_id?: string | null
+          total_possible?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attempts_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clos: {
+        Row: {
+          bloom_level: string | null
+          course_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          order_index: number | null
+          title: string
+        }
+        Insert: {
+          bloom_level?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          order_index?: number | null
+          title: string
+        }
+        Update: {
+          bloom_level?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          order_index?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clos_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          instructor_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          instructor_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          instructor_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          clo_id: string | null
+          course_id: string | null
+          created_at: string | null
+          estimated_duration: string | null
+          id: string
+          learning_objectives: string[] | null
+          session_no: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          clo_id?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          estimated_duration?: string | null
+          id?: string
+          learning_objectives?: string[] | null
+          session_no: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          clo_id?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          estimated_duration?: string | null
+          id?: string
+          learning_objectives?: string[] | null
+          session_no?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_clo_id_fkey"
+            columns: ["clo_id"]
+            isOneToOne: false
+            referencedRelation: "clos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          assessment_id: string | null
+          bloom_level: string | null
+          correct_answer: string
+          created_at: string | null
+          explanation: string | null
+          id: string
+          options: Json | null
+          order_index: number | null
+          points: number | null
+          question_text: string
+          type: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          bloom_level?: string | null
+          correct_answer: string
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          order_index?: number | null
+          points?: number | null
+          question_text: string
+          type: string
+        }
+        Update: {
+          assessment_id?: string | null
+          bloom_level?: string | null
+          correct_answer?: string
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          order_index?: number | null
+          points?: number | null
+          question_text?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          lesson_id: string | null
+          order_index: number | null
+          title: string
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          lesson_id?: string | null
+          order_index?: number | null
+          title: string
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          lesson_id?: string | null
+          order_index?: number | null
+          title?: string
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
