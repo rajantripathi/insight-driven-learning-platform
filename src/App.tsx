@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import RoleSelect from "./pages/RoleSelect";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import LessonBoard from "./pages/LessonBoard";
+import CourseSetup from "./pages/CourseSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,7 +54,7 @@ const App = () => (
             {/* Placeholder routes for future development */}
             <Route path="/course-setup" element={
               <ProtectedRoute>
-                <div className="p-8 text-center"><h1 className="text-2xl">Course Setup Wizard - Coming Soon</h1></div>
+                <CourseSetup />
               </ProtectedRoute>
             } />
             <Route path="/student-lesson" element={

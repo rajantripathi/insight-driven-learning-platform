@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Users, BarChart3, Settings, Calendar, CheckIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface Course {
   id: string;
@@ -17,36 +17,38 @@ interface Course {
   updated_at: string;
 }
 
+const fetchUserCourses = async () => {
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching courses:', error);
+    // Don't throw here, let useQuery handle the error state.
+    // This allows us to display a toast message in the component.
+    throw error;
+  }
+  return data || [];
+};
+
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
+  const { data: courses, isLoading: loading, error } = useQuery<Course[], Error>({
+    queryKey: ['teacherCourses'],
+    queryFn: fetchUserCourses,
+    retry: false, // Don't retry on failure, show error to user immediately.
+  });
 
-  const fetchCourses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCourses(data || []);
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-      toast({
+  if (error) {
+    toast({
         title: "Error",
-        description: "Failed to load courses",
+        description: `Failed to load your courses. Please try again later.`,
         variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+  }
 
   const recentActivity = [
     { action: "Lesson plan generated", course: "Introduction to Programming", time: "2 hours ago" },
@@ -96,7 +98,7 @@ const TeacherDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100">Total Courses</p>
-                  <p className="text-3xl font-bold">{courses.length}</p>
+                  <p className="text-3xl font-bold">{courses?.length ?? 0}</p>
                 </div>
                 <BookOpen className="h-12 w-12 text-blue-200" />
               </div>
@@ -150,7 +152,7 @@ const TeacherDashboard = () => {
                 <CardDescription>Manage and monitor your course progress</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {courses.length === 0 ? (
+                {(courses?.length ?? 0) === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500 mb-4">No courses found. Create your first course to get started!</p>
                     <Button 
@@ -161,7 +163,7 @@ const TeacherDashboard = () => {
                     </Button>
                   </div>
                 ) : (
-                  courses.map((course) => (
+                  courses?.map((course) => (
                     <div key={course.id} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
                          onClick={() => navigate(`/lesson-board?courseId=${course.id}`)}>
                       <div className="flex justify-between items-start mb-3">
