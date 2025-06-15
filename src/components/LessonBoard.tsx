@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   DndContext,
@@ -124,6 +125,22 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
     }
   };
 
+  const updateLessonSessionNo = async (lessonId: string, newSessionNo: number) => {
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ session_no: newSessionNo })
+        .eq('id', lessonId);
+
+      if (error) throw error;
+
+      return true;
+    } catch (error) {
+      console.error('Error updating lesson session:', error);
+      throw error;
+    }
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const lesson = lessons.find(l => l.id === active.id);
@@ -150,12 +167,7 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
     setLessons(updatedLessons);
 
     try {
-      const { error } = await supabase
-        .from('lessons')
-        .update({ session_no: newSessionNo })
-        .eq('id', lessonId);
-
-      if (error) throw error;
+      await updateLessonSessionNo(lessonId, newSessionNo);
 
       toast({
         title: "Success",
