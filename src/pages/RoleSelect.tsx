@@ -23,7 +23,7 @@ const RoleSelect = () => {
       description: "Create and manage courses with intelligent AI assistance",
       icon: Users,
       features: ["Course setup wizard", "AI lesson generation", "Assessment builder", "Student monitoring"],
-      color: "from-blue-500 to-indigo-600",
+      color: "from-bikal-blue to-blue-700",
       route: "/teacher-dashboard"
     },
     {
@@ -42,7 +42,7 @@ const RoleSelect = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="flex justify-center mb-6">
-            <BookOpen className="h-16 w-16 text-blue-600" />
+            <BookOpen className="h-16 w-16 text-bikal-blue" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Choose Your Role
@@ -72,7 +72,7 @@ const RoleSelect = () => {
                 <ul className="space-y-3">
                   {role.features.map((feature, index) => (
                     <li key={index} className="flex items-center text-gray-700">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                      <div className="w-2 h-2 bg-bikal-blue rounded-full mr-3"></div>
                       {feature}
                     </li>
                   ))}

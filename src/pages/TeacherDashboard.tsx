@@ -4,20 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Users, BarChart3, Settings, Calendar, CheckIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { sampleCourse, sampleLessons } from "@/data/sampleData";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
 
   const courses = [
-    { id: 1, name: "Introduction to Machine Learning", students: 24, progress: 78, status: "active" },
+    { 
+      id: 1, 
+      name: sampleCourse.name, 
+      students: 24, 
+      progress: 65, 
+      status: "active",
+      instructor: sampleCourse.instructor
+    },
     { id: 2, name: "Data Structures & Algorithms", students: 32, progress: 45, status: "active" },
     { id: 3, name: "Web Development Fundamentals", students: 18, progress: 92, status: "completed" }
   ];
 
   const recentActivity = [
-    { action: "Quiz graded", course: "Machine Learning", time: "2 hours ago" },
+    { action: "Lesson plan generated", course: sampleCourse.name, time: "2 hours ago" },
     { action: "New student enrolled", course: "Data Structures", time: "4 hours ago" },
-    { action: "Lesson plan generated", course: "Web Development", time: "1 day ago" }
+    { action: "Quiz created", course: sampleCourse.name, time: "1 day ago" }
   ];
 
   return (
@@ -32,7 +40,7 @@ const TeacherDashboard = () => {
           <div className="flex gap-4">
             <Button 
               onClick={() => navigate('/course-setup')}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6"
+              className="bg-bikal-blue hover:bg-bikal-blue/90 text-white rounded-xl px-6"
             >
               Create New Course
             </Button>
@@ -45,7 +53,7 @@ const TeacherDashboard = () => {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 rounded-2xl">
+          <Card className="bg-gradient-to-r from-bikal-blue to-blue-700 text-white border-0 rounded-2xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -111,6 +119,9 @@ const TeacherDashboard = () => {
                       <div>
                         <h3 className="font-semibold text-gray-900">{course.name}</h3>
                         <p className="text-sm text-gray-600">{course.students} students enrolled</p>
+                        {course.instructor && (
+                          <p className="text-sm text-bikal-blue font-medium">{course.instructor}</p>
+                        )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         course.status === 'active' 
@@ -143,7 +154,7 @@ const TeacherDashboard = () => {
               <CardContent className="space-y-4">
                 {recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start space-x-3 p-3 bg-blue-50 rounded-xl">
-                    <div className="bg-blue-600 p-1 rounded-full mt-1">
+                    <div className="bg-bikal-blue p-1 rounded-full mt-1">
                       <CheckIcon className="h-3 w-3 text-white" />
                     </div>
                     <div className="flex-1">
@@ -163,17 +174,17 @@ const TeacherDashboard = () => {
               <CardContent className="space-y-3">
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start rounded-xl"
+                  className="w-full justify-start rounded-xl hover:bg-blue-50"
                   onClick={() => navigate('/assessment-builder')}
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Create Assessment
                 </Button>
-                <Button variant="outline" className="w-full justify-start rounded-xl">
+                <Button variant="outline" className="w-full justify-start rounded-xl hover:bg-blue-50">
                   <Users className="h-4 w-4 mr-2" />
                   View Analytics
                 </Button>
-                <Button variant="outline" className="w-full justify-start rounded-xl">
+                <Button variant="outline" className="w-full justify-start rounded-xl hover:bg-blue-50">
                   <BookOpen className="h-4 w-4 mr-2" />
                   Generate Report
                 </Button>

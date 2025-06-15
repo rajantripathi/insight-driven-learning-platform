@@ -31,7 +31,7 @@ const Index = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto mb-16">
           <div className="flex justify-center mb-6">
-            <div className="bg-blue-600 p-4 rounded-2xl">
+            <div className="bg-bikal-blue p-4 rounded-2xl">
               <GraduationCap className="h-12 w-12 text-white" />
             </div>
           </div>
@@ -46,7 +46,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
               size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-bikal-blue hover:bg-bikal-blue/90 text-white px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
               onClick={() => navigate('/role-select')}
             >
               Get Started
@@ -69,7 +69,7 @@ const Index = () => {
             <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl bg-white/80 backdrop-blur-sm">
               <CardHeader className="text-center pb-4">
                 <div className="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="h-8 w-8 text-blue-600" />
+                  <feature.icon className="h-8 w-8 text-bikal-blue" />
                 </div>
                 <CardTitle className="text-xl text-gray-900">{feature.title}</CardTitle>
               </CardHeader>
@@ -83,7 +83,7 @@ const Index = () => {
         </div>
 
         {/* Quick Stats */}
-        <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 rounded-2xl shadow-2xl">
+        <Card className="bg-gradient-to-r from-bikal-blue to-blue-700 text-white border-0 rounded-2xl shadow-2xl">
           <CardContent className="py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <div className="text-center">
