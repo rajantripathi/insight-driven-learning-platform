@@ -29,12 +29,19 @@ interface LessonBoardProps {
   courseId: string;
 }
 
+// Helper function to validate UUID format
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -51,6 +58,15 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
 
   const fetchLessons = async () => {
     try {
+      setError(null);
+      
+      // Validate UUID format
+      if (!isValidUUID(courseId)) {
+        setError('Invalid course ID format. Please select a valid course.');
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('lessons')
         .select('*')
@@ -61,6 +77,7 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
       setLessons(data || []);
     } catch (error) {
       console.error('Error fetching lessons:', error);
+      setError('Failed to load lessons. Please try again.');
       toast({
         title: "Error",
         description: "Failed to load lessons",
@@ -132,6 +149,23 @@ export const LessonBoard: React.FC<LessonBoardProps> = ({ courseId }) => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bikal-blue"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Error</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchLessons}
+            className="px-4 py-2 bg-bikal-blue text-white rounded hover:bg-bikal-blue/90"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
