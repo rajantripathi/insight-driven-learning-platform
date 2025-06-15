@@ -124,7 +124,7 @@ Please generate a lesson plan in JSON format with the following structure:
   ]
 }
 
-Make the lesson engaging, practical, and aligned with university-level learning standards.`;
+Make the lesson engaging, practical, and aligned with university-level learning standards. Return STRICT VALID JSON. Do not wrap in markdown. If unsure, respond with the word ERROR.`;
 
     // Rate limiting check
     const projectedTokens = estimateTokens(prompt);
@@ -146,18 +146,70 @@ Make the lesson engaging, practical, and aligned with university-level learning 
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert educational designer who creates comprehensive lesson plans for university courses. Always respond with valid JSON only.' },
+          { role: 'system', content: 'You are an expert educational designer who creates comprehensive lesson plans for university courses. Always respond with valid JSON only. Return STRICT VALID JSON. Do not wrap in markdown. If unsure, respond with the word ERROR.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
+        response_format: { type: "json_object" }
       }),
     });
 
     const data = await response.json();
-    let lessonData;
+    const aiResponse = data.choices[0].message.content;
     
+    // Check if AI responded with ERROR
+    if (aiResponse.trim() === 'ERROR') {
+      const fallbackData = {
+        title: `${topic} - Lesson ${sessionNo}`,
+        estimatedDuration: "2 hours",
+        learningObjectives: [
+          `Understand the fundamentals of ${topic}`,
+          `Apply concepts of ${topic} in practical scenarios`,
+          `Analyze real-world applications of ${topic}`
+        ],
+        resources: [
+          {
+            type: "reading",
+            title: `Introduction to ${topic}`,
+            description: `Comprehensive overview of ${topic} concepts`,
+            url: "https://example.com/reading",
+            duration: "30 min"
+          }
+        ],
+        activities: [
+          {
+            type: "discussion",
+            title: `Group Discussion on ${topic}`,
+            description: `Interactive discussion about key concepts in ${topic}`,
+            estimatedTime: "45 min"
+          }
+        ]
+      };
+      
+      // Save fallback to Supabase
+      const { data: lesson, error: lessonError } = await supabase
+        .from('lessons')
+        .insert({
+          course_id: courseId,
+          clo_id: cloId,
+          title: fallbackData.title,
+          session_no: sessionNo,
+          estimated_duration: fallbackData.estimatedDuration,
+          learning_objectives: fallbackData.learningObjectives,
+        })
+        .select()
+        .single();
+
+      if (!lessonError) {
+        return new Response(JSON.stringify({ ...fallbackData, id: lesson.id }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    let lessonData;
     try {
-      lessonData = JSON.parse(data.choices[0].message.content);
+      lessonData = JSON.parse(aiResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       throw new Error('Invalid AI response format');

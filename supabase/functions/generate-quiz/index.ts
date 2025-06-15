@@ -120,7 +120,7 @@ Please generate the quiz in JSON format:
   ]
 }
 
-Make questions challenging and educationally valuable.`;
+Make questions challenging and educationally valuable. Return STRICT VALID JSON. Do not wrap in markdown. If unsure, respond with the word ERROR.`;
 
     // Rate limiting check
     const projectedTokens = estimateTokens(prompt);
@@ -142,18 +142,66 @@ Make questions challenging and educationally valuable.`;
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'You are an expert educational assessment designer. Create high-quality quiz questions that test student understanding. Always respond with valid JSON only.' },
+          { role: 'system', content: 'You are an expert educational assessment designer. Create high-quality quiz questions that test student understanding. Always respond with valid JSON only. Return STRICT VALID JSON. Do not wrap in markdown. If unsure, respond with the word ERROR.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
+        response_format: { type: "json_object" }
       }),
     });
 
     const data = await response.json();
-    let quizData;
+    const aiResponse = data.choices[0].message.content;
     
+    // Check if AI responded with ERROR
+    if (aiResponse.trim() === 'ERROR') {
+      const fallbackData = {
+        title: `Assessment Quiz`,
+        estimatedDuration: "15 minutes",
+        questions: [
+          {
+            type: "multiple-choice",
+            question: "What is the most important aspect of effective learning?",
+            options: [
+              "Memorization of facts",
+              "Understanding concepts and applying them",
+              "Speed of completion",
+              "Perfect recall"
+            ],
+            correctAnswer: "1",
+            bloomsLevel: "Comprehension",
+            explanation: "Effective learning focuses on understanding and application rather than mere memorization."
+          }
+        ]
+      };
+      
+      // Save fallback to Supabase
+      const { data: assessment, error: assessmentError } = await supabase
+        .from('assessments')
+        .insert({
+          lesson_id: lessonId,
+          title: fallbackData.title,
+          estimated_duration: fallbackData.estimatedDuration,
+          total_points: fallbackData.questions.length * 5,
+        })
+        .select()
+        .single();
+
+      if (!assessmentError) {
+        return new Response(JSON.stringify({ 
+          ...fallbackData, 
+          id: assessment.id,
+          lessonId,
+          totalPoints: fallbackData.questions.length * 5 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    let quizData;
     try {
-      quizData = JSON.parse(data.choices[0].message.content);
+      quizData = JSON.parse(aiResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       throw new Error('Invalid AI response format');
